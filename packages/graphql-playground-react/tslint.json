@@ -8,6 +8,7 @@
     "no-empty": false,
     "no-shadowed-variable": false,
     "prefer-for-of": false,
-    "no-string-literal": false
+    "no-string-literal": false,
+    "no-console": false
   }
 }

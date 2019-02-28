@@ -111,6 +111,7 @@ export class SchemaFetcher {
     }
 
     const options = set(session, 'headers', headers) as any
+    delete options.headers['X-Apollo-Tracing']
 
     const { link } = this.linkGetter(options)
 

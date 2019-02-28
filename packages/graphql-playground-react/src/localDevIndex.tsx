@@ -99,7 +99,6 @@ const customLinkCreator = (
 
   const link = new HttpLink({
     uri: session.endpoint,
-    fetch,
     headers,
     credentials,
   })

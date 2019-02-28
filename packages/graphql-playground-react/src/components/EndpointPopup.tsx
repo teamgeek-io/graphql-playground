@@ -34,10 +34,11 @@ export default class EndpointPopup extends React.Component<Props, State> {
         }),
       })
         .then(res => {
-          this.setState({ valid: res.status < 400 })
+          this.setState({ valid: true })
         })
         .catch(err => {
           this.setState({ valid: false })
+          throw err
         })
     }
   }, 500) as any

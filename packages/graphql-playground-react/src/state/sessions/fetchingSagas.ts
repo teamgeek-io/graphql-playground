@@ -1,3 +1,5 @@
+import * as aws4 from 'aws4'
+import * as url from 'url'
 import { ApolloLink, execute } from 'apollo-link'
 import { parseHeaders } from '../../components/Playground/util/parseHeaders'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -50,6 +52,7 @@ export interface LinkCreatorProps {
   endpoint: string
   headers?: Headers
   credentials?: string
+  settings: Object
 }
 
 export interface Headers {
@@ -67,9 +70,46 @@ export const defaultLinkCreator = (
     connectionParams = { ...headers }
   }
 
+  function customFetch(uri, options) {
+    options = options || {}
+    const secretAccessKey = options.headers.iamSecretAccessKey
+    const accessKeyId = options.headers.iamAccessKeyId
+    const sessionToken = options.headers.iamSessionToken
+
+    delete options.headers.iamSecretAccessKey
+    delete options.headers.iamAccessKeyId
+    delete options.headers.iamSessionToken
+    delete options.headers['x-apollo-tracing']
+
+    const urlObject = url.parse(uri)
+    const signable = {
+      host: urlObject.host,
+      path: urlObject.path,
+      method: '',
+      body: '',
+      headers: [],
+      region: '',
+      service: '',
+    }
+    const keys = ['method', 'body', 'headers', 'region', 'service']
+    keys.forEach(key => {
+      signable[key] = options[key]
+    })
+
+    const credentials = {
+      secretAccessKey,
+      accessKeyId,
+      sessionToken,
+    }
+    aws4.sign(signable, credentials)
+
+    return fetch(uri, signable)
+  }
+
   const httpLink = new HttpLink({
     uri: session.endpoint,
     headers,
+    fetch: customFetch,
     credentials,
   })
 
@@ -131,6 +171,7 @@ function* runQuerySaga(action) {
     endpoint: session.endpoint,
     headers,
     credentials: settings['request.credentials'],
+    settings,
   }
 
   const { link, subscriptionClient } = linkCreator(lol, subscriptionEndpoint)
